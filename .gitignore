@@ -1,1 +1,7 @@
 *.tar
+
+# executables
+btest
+fshow
+ishow
+
