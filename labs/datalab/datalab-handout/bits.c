@@ -176,7 +176,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+     int num = 0xaa + (0xaa << 8) + (0xaa << 16) + (0xaa << 24);
+     printf("%X\n", num);
+  return (x & num) ^ num;
 }
 /* 
  * negate - return -x 
