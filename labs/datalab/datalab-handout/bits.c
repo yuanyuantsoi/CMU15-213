@@ -164,8 +164,7 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-   int tmin = 1 << 31;
-  return x == (tmin - 1) ;
+  return 0;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -177,8 +176,7 @@ int isTmax(int x) {
  */
 int allOddBits(int x) {
      int num = 0xaa + (0xaa << 8) + (0xaa << 16) + (0xaa << 24);
-     printf("%X\n", num);
-  return (x & num) ^ num;
+  return !((x & num) ^ num);
 }
 /* 
  * negate - return -x 
@@ -188,7 +186,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~ x + 1;
 }
 //3
 /* 
@@ -201,7 +199,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  return !(((x - 0x30) >> 31) & ~((x - 0x40) >> 31));
 }
 /* 
  * conditional - same as x ? y : z 
