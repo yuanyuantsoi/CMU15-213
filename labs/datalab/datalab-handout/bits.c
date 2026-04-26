@@ -199,7 +199,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return !(((x - 0x30) >> 31) & ~((x - 0x40) >> 31));
+  return ! ((x >> 8) | ((x >> 4) ^ 0x3));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +209,10 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+	int flag = !x;
+	int maskY = ((~flag) << 31) >> 31;
+	int maskZ = ~maskY;
+  return  ((maskY & y) | (maskZ & z));
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
