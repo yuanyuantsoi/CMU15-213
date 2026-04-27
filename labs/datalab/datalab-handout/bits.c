@@ -269,7 +269,31 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+     unsigned e = (uf >> 23) & 0xff;
+     unsigned fMask = 0x7fffff;
+     unsigned f = uf & fMask;
+     unsigned s = (uf >> 31) & 1;
+     unsigned result;
+
+     if (e == 0x0) {
+	     unsigned msbF = (f >> 22) & 1;
+	     f = (f << 1) & fMask;
+	     if (msbF == 1) {
+		     e = e + 1;
+	     }
+     } else if (e == 0xff) {
+	     if (f == 0) {
+		     f = (f << 1) & fMask;
+	     } else {
+		     return uf;
+	     }
+     } else {
+	     e = e + 1;
+     }
+
+     result = (s << 31) + (e << 23) + f;
+
+  return result;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -284,7 +308,38 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+	unsigned s = (uf >> 31) & 1;
+	unsigned e = (uf >> 23) & 0xff;
+	int E = e - 127;
+	unsigned fMask = 0x7fffff;
+	unsigned f = uf & fMask;
+	unsigned shift = 23;
+	int result = 0;
+	unsigned msbF;
+
+	if (e < 127) {
+		return 0;
+	} else if (e == 0xff || e >= 159) {
+		return 0x80000000u;
+	}
+
+	while (E >= 0) {
+		E = E - 1;
+		if (shift >= 23) {
+			msbF = 1;
+		} else if (shift >= 0 && shift < 23) {
+			msbF = (1 << shift) & f;
+		} else {
+			msbF = 0;
+		}
+		shift = shift - 1;
+
+		result = (result << 1) + msbF;
+	}
+
+	if (s == 1) result = -result;
+
+  return result;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -300,5 +355,19 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+	int e;
+	unsigned ue;
+	unsigned uf;
+
+	 if (x <= -127) {
+		 return 0;
+	 } else if (x >= 128) {
+		 ue = 0xff;
+	 } else {
+		 e = x + 127;
+		 ue = e;
+	 }
+
+	 uf = ue << 23;
+	 return uf;
 }
