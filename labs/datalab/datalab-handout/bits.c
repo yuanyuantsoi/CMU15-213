@@ -212,9 +212,25 @@ int isTmax(int x) {
  *   Max ops: 12
  *   Rating: 2
  */
+
+/*
+ * 解题思路：
+ * 构造mask = 0xAAAAAAAA
+ * 由于常量限制0x0-0xFF, 通过拼接0xAA得到完整mask
+ * 
+ * 判断逻辑：
+ * 1. x & mask -> 提取所有奇数位
+ * 2. 如果这些为全为1，则应等于mask
+ * 3. 使用异或判断是否相等
+ * 	(x & mask) ^ mask == 0 --> 表示完全匹配
+ * 4. 用！转换为布尔值
+ */
 int allOddBits(int x) {
-     int num = 0xaa + (0xaa << 8) + (0xaa << 16) + (0xaa << 24);
-  return !((x & num) ^ num);
+	int mask;
+	mask = 0xAA;
+	mask = (mask << 8) | mask;
+	mask = (mask << 16) | mask;
+  return !((x & mask) ^ mask);
 }
 /* 
  * negate - return -x 
