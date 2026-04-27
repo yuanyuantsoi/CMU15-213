@@ -133,7 +133,12 @@ NOTES:
  *      the correct answers.
  */
 
-
+/*
+ * 解题思路：
+ * 一句话模型： x ^ y = (x & ~y) | (~x & y);通过德摩根公式转换为只有符号～和&
+ * 核心技巧：x^y用与或非表达式和德摩根公式
+ * 最简代码： ~(~(x & ~y) & ~(~x & y));
+ */
 #endif
 //1
 /* 
@@ -146,12 +151,24 @@ NOTES:
 int bitXor(int x, int y) {
   return ~(~(x & ~y) & (~(~x & y)));
 }
+
 /* 
  * tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
  */
+/*
+ * 解题思路：
+ * 一句话模型：
+ * 	tmin = -2^(w-1), w bit的int
+ * 核心技巧：
+ * 左移低位补0，因此将1左移(w - 1)位即可得到该数
+ * 对于32位int(w = 32),即1 << 31
+ *
+ * 最终代码： 1 << 31;
+ */
+
 int tmin(void) {
   return 1 << 31;
 }
@@ -162,6 +179,16 @@ int tmin(void) {
  *   Legal ops: ! ~ & ^ | +
  *   Max ops: 10
  *   Rating: 1
+ */
+
+/*
+ * 解题思路：
+ * 一句话模型：
+ * a ^ a = 0;
+ *
+ * 核心技巧：
+ * 利用tmin = tmax + 1;
+ * 
  */
 int isTmax(int x) {
   return !((x ^ (~(x + 1))) | !(x + 1));
