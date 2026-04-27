@@ -164,7 +164,7 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 0;
+  return !((x ^ (~(x + 1))) | !(x + 1));
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -199,7 +199,11 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return ! ((x >> 8) | ((x >> 4) ^ 0x3));
+	int tho = x >> 8;
+	int hun = (x >> 4) ^ 0x3;
+	int unit =((((x >> 3) & 0x1) ^ 0) & (!!(((x >> 1) & 0x7) ^ 0x4)));
+
+  return ! (tho | hun | unit);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -222,7 +226,12 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+	int eqFlag = !(x ^ y);  // x == y, eqFlag == 1
+	int oppFlag = (x ^ y) >> 31; // oppFlag,
+	int negX = x >> 31; // x < 0, negX = nonzero
+	int addFlag = (x + (~y + 1)) >> 31; // result of addition less than 0, addFlag = 1
+
+  return !!(eqFlag | (oppFlag & negX) | (~oppFlag & addFlag));
 }
 //4
 /* 
@@ -252,9 +261,35 @@ int logicalNeg(int x) {
  *  Legal ops: ! ~ & ^ | + << >>
  *  Max ops: 90
  *  Rating: 4
+ *  根据Gemini给出的思路
  */
 int howManyBits(int x) {
-  return 0;
+	int total_bits, b16, b8, b4, b2, b1, b0;
+
+	x = x ^ (x >> 31);
+
+	total_bits = 0;
+	b16 = (!!(x >> 16)) << 4; //高位有1时，为1；无1时为0；
+	x = x >> b16; //x为高16位或低16位
+	
+	b8 = (!!(x >> 8)) << 3;
+	x = x >> b8;
+
+	b4 = (!!(x >> 4)) << 2;
+	x = x >> b4;
+
+	b2 = (!!(x >> 2)) << 1;
+	x = x >> b2;
+
+	b1 = (!!(x >> 1));
+	x = x >> b1;
+
+	b0 = x;
+
+	total_bits = b16 + b8 + b4 + b2 + b1 + b0 + 1;
+
+
+  return total_bits;
 }
 //float
 /* 
@@ -271,7 +306,7 @@ int howManyBits(int x) {
 unsigned floatScale2(unsigned uf) {
      unsigned e = (uf >> 23) & 0xff;
      unsigned fMask = 0x7fffff;
-     unsigned f = uf & fMask;
+     unsigned f = uf & fMask;  //Alternative: (f << 9) >> 9 extract the lower 23 bits 
      unsigned s = (uf >> 31) & 1;
      unsigned result;
 
