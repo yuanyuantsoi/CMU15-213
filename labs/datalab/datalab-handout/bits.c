@@ -184,14 +184,25 @@ int tmin(void) {
 /*
  * 解题思路：
  * 一句话模型：
- * a ^ a = 0;
+ * 利用tmax的特点： tmax + 1 = tmin; ~tmin = tmax;
+ *
+ * 如果x = tmax, 则：
+ * 	x == ~(x + 1)
+ * 由于-1也符合这个规则，则需要排除掉-1
  *
  * 核心技巧：
- * 利用tmin = tmax + 1;
- * 
+ * 利用tmin = tmax + 1; tmax = ~tmin;
+ * 排除掉-1;
+ *
+ * 代码实现：
+ * 先根据tmax的特殊性质筛选出来，在通过!isNegOne排除掉-1;
+ *
  */
 int isTmax(int x) {
-  return !((x ^ (~(x + 1))) | !(x + 1));
+	int isSpecial, isNegOne;
+	isSpecial = !(x ^ (~(x + 1)));
+	isNegOne = !(x + 1);
+  return isSpecial & !isNegOne;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
