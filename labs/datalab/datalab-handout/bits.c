@@ -454,6 +454,20 @@ int howManyBits(int x) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 4
+ *
+ *   解法思路：
+ *   	32-bit的single float point argument f中
+ *   	分别是：s bit(1位）+  exp(8位) + frac(23位)
+ *   	2*f = (-1)^s * M * 2^E,bias = 2^7-1 = 127
+ *   	 - e为全0(denormalized)
+ *   	 	- M = 0.frac; E = 1 - bias;
+ *   	 	- frac << 1表示2*f,若frac最高位为1，E不变，e=e + 1,f从denormalized变为normalized
+ *   	 - e为全1（+/-无穷 / NAN）
+ *   	 	- +/-∞ * 任何数 = +/- ∞, e不变，frac << 1
+ *   	 	- nan, return f unchanged
+ *       - e为非特殊值(normalized)
+ *       	- M = 1 + f, E = e - bias
+ *       	- M不变，E + 1来表示2*f, e = e + 1
  */
 unsigned floatScale2(unsigned uf) {
      unsigned e = (uf >> 23) & 0xff;
