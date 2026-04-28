@@ -333,14 +333,30 @@ int conditional(int x, int y, int z) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 24
  *   Rating: 3
+ *
+ * 解法思路：
+ *  一句话模型： 
+ *  x <= y
+ *  1. 异号时
+ *  	- 如果x为负数，则x <=y 成立
+ *  2. 同号时
+ *  	- 判断x - y 是否< 0
+ *  3. x = y
+ *
+ *  核心技巧：
+ *  - isEqual: x==y
+ *  - oppFlag: x ^ y的符号位，异号时为全1，否则为0
+ *  - diffSign: x - y 的符号，负数时为全1
+ *  - signX: x的符号，负数时为全1
  */
 int isLessOrEqual(int x, int y) {
-	int eqFlag = !(x ^ y);  // x == y, eqFlag == 1
-	int oppFlag = (x ^ y) >> 31; // oppFlag,
-	int negX = x >> 31; // x < 0, negX = nonzero
-	int addFlag = (x + (~y + 1)) >> 31; // result of addition less than 0, addFlag = 1
+	int isEqual, oppFlag, diffSign, signX;
+	isEqual = !(x ^ y);
+	oppFlag = (x ^ y) >> 31;
+	diffSign = (x + (~y) + 1) >> 31;
+	signX = x >> 31;
 
-  return !!(eqFlag | (oppFlag & negX) | (~oppFlag & addFlag));
+  return !!(isEqual | (oppFlag & signX) | ((~oppFlag) & diffSign));
 }
 //4
 /* 
