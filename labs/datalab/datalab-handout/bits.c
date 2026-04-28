@@ -263,13 +263,42 @@ int negate(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 15
  *   Rating: 3
+ * 
+ * 解题思路一：(溢出风险）
+ * 0x30 <= x <= 0x39 
+ * 1. 根据two's complement的符号位表示规则，最高位为0为正数，最高位为1为负数
+ *    asciiDigit的范围等价于
+ *   	 x - 0x30 >=0 && x - 0x3a < 0
+ * 2. 由于操作符限制无法使用减法，根据2‘s complement负数 -x = ~ x + 1,可得到：
+ * 	 -0x30 = ~0x30 + 1
+ * 	 -0x40 = ~0x3a + 1
+ *    left = x - 0x30 = x + (~0x30 + 1) 
+ *    right = x - 0x3a = x + (~0x3a + 1)
+ *  
+ * 3. 通过left >> 31, right >> 31（Arithmtic right shift高位补充符号位）得到
+ *    left和right的符号位扩展
+ *    	当 left为0x0, right为0xFFFFFFFF时，x为asciiDigit
+ *    	 return ~left & right;
+ *
+ *
+ * 解题思路二：
+ *  1. 利用位运算判断每位是否在范围内:
+ *  	x的高28位应该为0x3
+ *  	x的低四位应为0x0~0x9
+ *  2. 通过移位和异或判断高位
+ *  	high = !((x >> 4) ^ 0x3); 高位为3时，结果为1
+ *  3. 通过是否产生进位，判断是否在范围内
+ *  	low = x & 0xf
+ *  	le9 = !((x + 0x6) >> 4);
+ *     若x + 0x6的第5位没有进位，则low <= 9
  */
 int isAsciiDigit(int x) {
-	int tho = x >> 8;
-	int hun = (x >> 4) ^ 0x3;
-	int unit =((((x >> 3) & 0x1) ^ 0) & (!!(((x >> 1) & 0x7) ^ 0x4)));
+	int high, low, le9;
+	high = !((x >> 4) ^ 0x3);
+	low = x & 0xf;
+	le9 = !((low + 0x6) >> 4);
 
-  return ! (tho | hun | unit);
+  return high & le9;
 }
 /* 
  * conditional - same as x ? y : z 
