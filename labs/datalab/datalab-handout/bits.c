@@ -595,21 +595,44 @@ int floatFloat2Int(unsigned uf) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. Also if, while 
  *   Max ops: 30 
  *   Rating: 4
+ *
+ *  解法思路：
+ *  一句话模型： 
+ *  	2.0 ^ x = (-1)^sign * M * 2 ^ E
+ *	sign = 0
+ *	Normalized: 
+ *	1. M = 1.0, frac = 0x0 
+ *	2. E = x = e - bias, bias = 127,  0 < e < 255
+ *	   -127 < x < 128
+ *	Denormalized: 
+ *	1. M = 0.000...01 = 2 ^ -k
+ *	   frac = 000...0100, 1位于(23-k)位
+ *			1 =< k <= 23
+ *	2. E = 1 - bias = -126
+ *	3. x = -k - 126,  -127 >= x >= -149
+ *
+ *	综上所述，
+ *		x <= -149, 返回0
+ *		-149 =< x <= -127,exp=0 M = 2^(x + 126), frac = 1 << (23 - k)
+ *		-127 < x < 128,exp=x+127, M = 1.0
+ *		128 <= x, 返回+∞
  */
 unsigned floatPower2(int x) {
-	int e;
-	unsigned ue;
-	unsigned uf;
+	unsigned exp, frac, uf;
 
-	 if (x <= -127) {
-		 return 0;
-	 } else if (x >= 128) {
-		 ue = 0xff;
-	 } else {
-		 e = x + 127;
-		 ue = e;
-	 }
+	if (x < -149) {
+		return 0;
+	} else if (x <= -127) {
+		exp = 0;
+		frac = 1 << (23 + x + 126);
+	} else if (x <= 128) {
+		exp = x + 127;
+		frac = 0;
+	} else {
+		exp = 0xFF;
+		frac = 0;
+	}
 
-	 uf = ue << 23;
-	 return uf;
+	uf = exp << 23 | frac;
+	return uf;
 }
