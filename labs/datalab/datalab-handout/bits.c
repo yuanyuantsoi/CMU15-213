@@ -306,12 +306,26 @@ int isAsciiDigit(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 16
  *   Rating: 3
+ *
+ *   解题思路：
+ *   一句话模型：
+ *    x ? y : z -> x 等价于 x为非0值时，选y; x为0时选z
+ *
+ *   核心技巧：
+ *   	通过mask选择y和z
+ *   	 (mask & y) | (~mask & z)
+ *	
+ *	通过!!x把x规整为0/1
+ *	当!!x为0时
+ *		0 << 31 >> 31 = 0x00000000
+ *		mask全0选择z
+ *	当!!x为1时
+ *		1 << 31 >> 31 = 0xFFFFFFFF
+ *		mask全1选择y
  */
 int conditional(int x, int y, int z) {
-	int flag = !x;
-	int maskY = ((~flag) << 31) >> 31;
-	int maskZ = ~maskY;
-  return  ((maskY & y) | (maskZ & z));
+	int mask = ((!!x) << 31) >> 31;
+  return  ((mask & y) | (~mask & z));
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
