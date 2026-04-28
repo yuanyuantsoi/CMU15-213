@@ -365,7 +365,15 @@ int isLessOrEqual(int x, int y) {
  *   Examples: logicalNeg(3) = 0, logicalNeg(0) = 1
  *   Legal ops: ~ & ^ | + << >>
  *   Max ops: 12
- *   Rating: 4 
+ *   Rating: 4
+ *
+ *   解法思路：
+ *   	！x = x所有位相或再取反
+ *
+ *   核心技巧：
+ *   	1. 位折叠（移位和或）得到x所有位相或，结果保存在lsb位
+ *   	2. mask lsb位，再取反，得到!x
+ *   	
  */
 int logicalNeg(int x) {
   x = x | (x >> 16);
