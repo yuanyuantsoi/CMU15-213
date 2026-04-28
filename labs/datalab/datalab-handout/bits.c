@@ -238,6 +238,18 @@ int allOddBits(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 5
  *   Rating: 2
+ *
+ *   解题思路：
+ *   根据原码和补码(2's complement)的关系：-x = ~x + 1
+ *
+ *   相关知识点：
+ *   统一加法和减法使得 a-b = a + (-b)
+ *   如何表示-b:
+ *   	计算机本质为模运算 2^n
+ *   	-x = 2^n - x  --> 例如 -3 = 16 - 3
+ *   	-x = 2^n - 1 - x + 1
+ *   	   = (2^n - 1 - x) + 1  --> 2^n - 1 - x = ~x
+ *   	   = ~x + 1
  */
 int negate(int x) {
   return ~ x + 1;
