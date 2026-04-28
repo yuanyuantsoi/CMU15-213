@@ -507,40 +507,81 @@ unsigned floatScale2(unsigned uf) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 4
+ *  
+ *  解法思路：
+ *   将IEEE 754 single precision float 转成int.
+ *
+ *   字段：
+ *    sign: 1 bit
+ *    exp: 8 bits
+ *    frac: 23 bits
+ *
+ *   Normalized:
+ *   	(-1)^sign * 1.frac * 2^E
+ *   	E = e - bias, bias = 127
+ *
+ *   核心判断：
+ *     - E < 0:
+ *     		|V| < 1,转int后为0
+ *     - E >= 31:
+ *     		超出int范围，返回0x80000000u
+ *     		同时覆盖NaN/Inf,因为exp == 255时，E == 128
+ *     - 0 <= E < 31:
+ *     		total_bits = (1 << 23) | frac
+ *     		用total_bits保存1.frac的24位有效位
+ *
+ *   位移规则：
+ *   	- E < 23
+ *   	 	float2I = total_bits >> (23 - E) //Total_bits共24位，不涉及符号位
+ *   	- E >= 23:
+ *   		float2I = total_bits << (E - 23)
+ *   最后根据sign决定是否取反
+ *
+ *
+ *   int范围(-1)*2^31 ~ 2^31 -1
+ *   single float point表示范围大于int, 超出int范围时返回0x80000000u
+ *
+ *   核心技巧：
+ *   	- normalized: E = e - bias, M = 1 + 0.f
+ *   	    1. E >= 31, 返回0x80000000u
+ *   	    2. E < 0, 返回0
+ *   	    3. 0 < E < 31时, total_bits = M << 23 保存M中所有位信息
+ *   	    	 - float2I = M << E
+ *   		 - E > 23时，M << E --> total_bits << E - 23
+ *   	    	 - E < 23时，M << E --> float2I = (total_bits >> (23 - E)) & (1 << (23 - E)));
+ *   	    当sign bit 为-1时,float2I = -float2I
+ *   	- denormalized: E = 1 - bias = -123, M = 0.f,超出int范围,返回0x80000000u
+ *   	- Nan/Inf：E = 128,超出int范围，返回0x80000000u
+ *   	其实无需考虑是否normalized/denomalized/Inf/NaN,只需考虑E的大小
  */
 int floatFloat2Int(unsigned uf) {
-	unsigned s = (uf >> 31) & 1;
-	unsigned e = (uf >> 23) & 0xff;
-	int E = e - 127;
-	unsigned fMask = 0x7fffff;
-	unsigned f = uf & fMask;
-	unsigned shift = 23;
-	int result = 0;
-	unsigned msbF;
+	unsigned sign, exp, frac, total_bits, float2I; 
+	int E;
+	sign = (uf >> 31) & 1;
+	exp = (uf >> 23) & 0xff;
+	E = exp - 127;
+	frac = uf & 0x7FFFFF;
 
-	if (e < 127) {
+	if (E < 0) {
 		return 0;
-	} else if (e == 0xff || e >= 159) {
+	} 
+
+	if (E >= 31) {
 		return 0x80000000u;
 	}
 
-	while (E >= 0) {
-		E = E - 1;
-		if (shift >= 23) {
-			msbF = 1;
-		} else if (shift >= 0 && shift < 23) {
-			msbF = (1 << shift) & f;
-		} else {
-			msbF = 0;
-		}
-		shift = shift - 1;
 
-		result = (result << 1) + msbF;
+	total_bits = (1 << 23) | frac;  // used to store all bits information
+
+	if (E < 23) {
+		float2I = total_bits >> (23 - E);
+	} else {
+		float2I = total_bits << (E - 23);
 	}
 
-	if (s == 1) result = -result;
-
-  return result;
+	if (sign == 1) float2I = -float2I;
+  	
+	return float2I;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
