@@ -1,13 +1,35 @@
 phase1:
-	- 原理：函数返回时，%rsp指针指向Return Address(原调用函数的下一个instruction的地址）
-	- sol: 利用gets的buffer overflow, 改写Return Address
+  - 原理：
+	函数返回时，%rsp指针指向Return Address(原调用函数的下一个instruction的地址）
+  - sol: 
+	利用gets的strings长度过长时产生buffer overflow, 改写Return Address
 
 phase2:
-	- 原理：调用函数时，先把下个指令的地址push到栈上； 函数返回时，返回目前栈顶的地址；
-	- sol: 
-		1.先改写return addr为injection code的地址
-		2.injection code: pushq start addr of touch2
-				  nop
-				  mov cookie %rdi
-				  ret
-		3.当指令返回时，%rip指令寄存器会跳到%rsp栈顶的所存的地址
+  - 原理：
+	调用函数时，先把下个指令的地址push到栈上； 
+	函数返回时，返回目前栈顶的地址；
+  - sol: 
+	1. 先改写return addr为injection code的地址
+	2. injection code: pushq start addr of touch2
+			   nop
+			   mov cookie %rdi
+			   ret
+	3. 指令返回时，%rip指令寄存器会跳到%rsp栈顶的所存的地址
+
+phase3:
+  - 原理：
+	区别于phase2: 把立即数存到寄存器中，phase3需要把string的地址存到寄存器中
+	key points: 不能把string存到get buf特定区域，可能会被覆盖 
+  - sol:
+	1. 把string 位置放到低于hexMatch和strncmp所需要的空间，需要知道hexmatch和strncmp大概需要的空间
+	2. 把string 写到hexMatch和strncmp的栈里面不会被改写的地址，需要知道hexmatch和strncmp会改写所分配栈的哪些空间
+	3. 把string 写到栈的高位
+	步骤同phase2:
+	1. 改写get buf的return address 为injection code的地址
+	2. injection code: push cookie string onto stack
+			   push start addr of touch3 onto stack
+		 	   nop
+			   mov the addr of cookie string, %rdi
+		           ret
+	3. 指令返回时，跳转到touch3,此时cookie string 存到栈顶，不会被后续调用函数影响
+	缺点：touch3返回时，会出现异常
