@@ -1,0 +1,13 @@
+phase1:
+	- 原理：函数返回时，%rsp指针指向Return Address(原调用函数的下一个instruction的地址）
+	- sol: 利用gets的buffer overflow, 改写Return Address
+
+phase2:
+	- 原理：调用函数时，先把下个指令的地址push到栈上； 函数返回时，返回目前栈顶的地址；
+	- sol: 
+		1.先改写return addr为injection code的地址
+		2.injection code: pushq start addr of touch2
+				  nop
+				  mov cookie %rdi
+				  ret
+		3.当指令返回时，%rip指令寄存器会跳到%rsp栈顶的所存的地址
